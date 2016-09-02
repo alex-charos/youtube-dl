@@ -3,7 +3,7 @@ var youtubedl = require('youtube-dl');
 var ytdl = require('ytdl');
 var ffmpeg = require('fluent-ffmpeg');
 var Client = require('node-rest-client').Client;
-
+var mkdirp = require('mkdirp');
 
 var fileWithVideoUrls = 'files1.txt';
 var rootStorageDir = './'
@@ -42,11 +42,19 @@ function extractMP3(extractObj) {
   var stream = ytdl(extractObj.url);
   var client = new Client();
   client.get("https://www.youtube.com/oembed?url=" + videos[i] + "&format=json", function (data, response) {
-    var proc = new ffmpeg({source:stream});
-    proc.setFfmpegPath(ffmpegPath);
-    proc.saveToFile(extractObj.fileName + ' - ' + data.title.replace("/", "--") + '.mp3',function (stdout, stderr) {
-      console.log(stdout);    
-    });
+    mkdirp(rootStorageDir, function(err) { 
+      if (err !== null) {
+        console.log('Error Making Dir: ' + rootStorageDir);
+      }
+      var proc = new ffmpeg({source:stream});
+      proc.setFfmpegPath(ffmpegPath);
+      proc.saveToFile(rootStorageDir + extractObj.fileName + ' - ' + data.title.replace("/", "--") + '.mp3',
+        function (stdout, stderr) {
+          console.log('TEST');
+          console.log(stdout);    
+        });
+      });
+    
   });
 }
 
