@@ -8,16 +8,21 @@ var mkdirp = require('mkdirp');
 var fileWithVideoUrls = 'files1.txt';
 var rootStorageDir = './'
 var ffmpegPath ='./ffmpeg/ffmpeg';
+var counterFrom = 1;
 if (process.argv.length <4) {
-  console.log('usage: node downloader.js fileName rootStorageDir ffmpegPath');
-  console.log('  fileName:                The file containing the youtube urls');
-  console.log('  rootStorageDir:          The directory to store the mp3 files');
-  console.log('  ffmpegPath [optional]:   The ffmpeg path. Default: ' + ffmpegPath);
+  console.log('usage: node downloader.js fileName rootStorageDir  counterFrom ffmpegPath');
+  console.log('  fileName               : The file containing the youtube urls');
+  console.log('  rootStorageDir         : The directory to store the mp3 files');
+  console.log('  counterFrom [optional] : The counter to start the songs from. Default: ' + counterFrom);
+  console.log('  ffmpegPath [optional]  : The ffmpeg path. Default: ' + ffmpegPath);
   return;
 }
 
 fileWithVideoUrls = process.argv[2];
 rootStorageDir = process.argv[3];
+if (process.argv.length > 4) {
+  counterFrom = process.argv[4];
+}
   
 
 var videos = readFile(fileWithVideoUrls);
@@ -28,7 +33,7 @@ mkdirp(rootStorageDir, function(err) {
     return;
   }
   for (var i = 0; i < videos.length; i++) {
-    var extractObj = {url:videos[i], fileName: i+1};
+    var extractObj = {url:videos[i], fileName: counterFrom++};
     extractMP3(extractObj);
   }
 });
@@ -58,12 +63,15 @@ function finished(url) {
 
 function extractMP3(extractObj) {
   console.log(extractObj.url);
-  var stream = ytdl(extractObj.url);
+ 
   var client = new Client();
   client.get("https://www.youtube.com/oembed?url=" + extractObj.url + "&format=json", function (data, response) {
+      
+      var stream = ytdl(extractObj.url);
       var proc = new ffmpeg({source:stream});
       proc.url = extractObj.url;
       proc.setFfmpegPath(ffmpegPath);
+      proc.audioBitrate(128);
       proc.on ('end', function( ) {
         finished(proc.url);
       })
